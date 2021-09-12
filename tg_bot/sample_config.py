@@ -16,7 +16,7 @@ class Config(object):
     API_KEY = ""
     OWNER_ID = ""  # Если не знаешь свой id напиши в личном чате в боте \id
     OWNER_USERNAME = ""
-    CHAT_ID = ""
+    CHAT_ID =  []
 
     # RECOMMENDED
     SQLALCHEMY_DATABASE_URI = ''  # необходим для любых модулей базы данных
