@@ -360,7 +360,7 @@ def donate(bot: Bot, update: Update):
     if chat.type == "private":
         update.effective_message.reply_text(DONATE_STRING, parse_mode=ParseMode.MARKDOWN, disable_web_page_preview=True)
 
-        if OWNER_ID != 712178565 and DONATION_LINK:
+        if OWNER_ID != user.id and DONATION_LINK:
             update.effective_message.reply_text("Вы также можете сделать пожертвование тому, кто сейчас меня обслуживает"
                                                 "[here]({})".format(DONATION_LINK),
                                                 parse_mode=ParseMode.MARKDOWN)
