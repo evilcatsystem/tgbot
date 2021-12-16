@@ -14,12 +14,12 @@ class Config(object):
 
     # Обязательно
     API_KEY = ""
-    OWNER_ID = ""  # Если не знаешь свой id напиши в личном чате в боте \id
+    OWNER_ID = ""  # Если не знаешь свой id напиши в личном чате в боте
     OWNER_USERNAME = ""
-    CHAT_ID =  []
+    CHAT_ID = -1
 
     # RECOMMENDED
-    SQLALCHEMY_DATABASE_URI = ''  # необходим для любых модулей базы данных
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///sqlite3.db'  # необходим для любых модулей базы данных
     MESSAGE_DUMP = False  # необходимо, чтобы сообщения "сохранить из" сохранялись
     LOAD = []
     NO_LOAD = [] # Список не загружаемых модулей
