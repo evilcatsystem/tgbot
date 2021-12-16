@@ -36,23 +36,27 @@ def sets(bot: Bot, update: Update):
 
 
 def top(bot: Bot, update: Update):
-    update.effective_message.delete()
     chat = update.effective_chat
-    get_user = get_user_top()[0:10]
-    users = '\n'.join(get_user)
-    top_two = [
-            [
-                InlineKeyboardButton('🔙', callback_data='top_three'),
-                InlineKeyboardButton('❌', callback_data='top_delete_message'),
-                InlineKeyboardButton('🔜', callback_data='top_two')
+    msg = update.effective_message
+    user_id = msg.from_user.id
+    if  sql.protected(user_id):
+        update.effective_message.delete()
+
+        get_user = get_user_top()[0:10]
+        users = '\n'.join(get_user)
+        top_two = [
+                [
+                    InlineKeyboardButton('🔙', callback_data='top_three'),
+                    InlineKeyboardButton('❌', callback_data='top_delete_message'),
+                    InlineKeyboardButton('🔜', callback_data='top_two')
+                ]
             ]
-        ]
-    reply_markup = InlineKeyboardMarkup(top_two)
-    bot.send_message(chat.id, 
-                    f"*Топ пользователей чата* \n\n{users}", 
-                    parse_mode=ParseMode.MARKDOWN, 
-                    reply_markup=reply_markup
-                    )
+        reply_markup = InlineKeyboardMarkup(top_two)
+        bot.send_message(chat.id,
+                        f"*Топ пользователей чата* \n\n{users}",
+                        parse_mode=ParseMode.MARKDOWN,
+                        reply_markup=reply_markup
+                        )
 
 # all other menus
 def top_menu(bot: Bot, update: Update):
@@ -105,7 +109,7 @@ def top_menu(bot: Bot, update: Update):
                                 parse_mode=ParseMode.MARKDOWN,
                                 reply_markup=reply_markup
                                 )
-        
+
     elif query.data == 'top_one':
         get_user = get_user_top()[0:10]
         users = '\n'.join(get_user)
@@ -130,15 +134,21 @@ def top_menu(bot: Bot, update: Update):
 def write(bot: Bot, update: Update):
     """ Изменение значение в таблице """
     chat = update.effective_chat  # type: Optional[Chat]
+    msg = update.effective_message
+    user_id = msg.from_user.id
     if chat.type != "private":
         if chat.id == CHAT_ID:
-            msg = update.effective_message
             name = msg.from_user.first_name
             user_id = str(msg.from_user.id)
             user = update.effective_user
             if user and not is_user_admin(chat, user.id):
                 check_ban.check_and_ban(update, user.id)
-            sql.write_top(user_id, name)
+            try:
+                user_id = msg.from_user.id
+                sql.get_user_top(user_id, name)
+            except:
+                sql.write_top(user_id, name)
+
 
 __help__ = """Топ пользователей чата
 - /top - Показать список активных пользователей"""
@@ -152,5 +162,3 @@ dispatcher.add_handler(BROADCAST_HANDLER)
 top_callback_handler = CallbackQueryHandler(top_menu, pattern=r"top_")
 dispatcher.add_handler(top_callback_handler)
 dispatcher.add_handler(MessageHandler(Filters.chat(CHAT_ID) & Filters.text, write))
-
-

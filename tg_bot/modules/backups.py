@@ -19,12 +19,8 @@ def import_data(bot: Bot, update):
     # TODO: allow uploading doc with command, not just as reply
     # only work with a doc
     if msg.reply_to_message and msg.reply_to_message.document:
-        try:
-            file_info = bot.get_file(msg.reply_to_message.document.file_id)
-        except BadRequest:
-            msg.reply_text("Попробуйте загрузить и повторно загрузить файл от имени себя перед импортом - кажется, это "
-                           "является ненадежным!")
-            return
+        file_info = bot.get_file(msg.reply_to_message.document.file_id)
+        
 
         with BytesIO() as file:
             file_info.download(out=file)

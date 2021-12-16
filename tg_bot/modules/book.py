@@ -2,29 +2,32 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram import Update, Bot
 from telegram.ext import CommandHandler, CallbackQueryHandler
-
+from tg_bot.modules.sql.top_users_sql import protected
 from tg_bot import dispatcher
 
 def book(bot: Bot, update: Update):
-    update.effective_message.delete()
-    chat = update.effective_chat
-    boook = [
-        [
-            InlineKeyboardButton("Книги📚", callback_data="book_books"),
-            InlineKeyboardButton("Словари брут📖", callback_data="book_slovar"),
-            InlineKeyboardButton("Видеокурсы📹", callback_data="book_video")
-        ],
-        [
-            InlineKeyboardButton("Вкусняшки😋", callback_data="book_vkus"),
-            InlineKeyboardButton("Сервисы😧", callback_data="book_servise"),
-            InlineKeyboardButton("Аудиокниги🔊", callback_data="book_audio")
-        ],
-        [
-            InlineKeyboardButton('❌', callback_data='book_delete_message')
+    user = update.effective_user  
+    user_id = user.id
+    if protected(user_id):
+        update.effective_message.delete()
+        chat = update.effective_chat
+        boook = [
+            [
+                InlineKeyboardButton("Книги📚", callback_data="book_books"),
+                InlineKeyboardButton("Словари брут📖", callback_data="book_slovar"),
+                InlineKeyboardButton("Видеокурсы📹", callback_data="book_video")
+            ],
+            [
+                InlineKeyboardButton("Вкусняшки😋", callback_data="book_vkus"),
+                InlineKeyboardButton("Сервисы😧", callback_data="book_servise"),
+                InlineKeyboardButton("Аудиокниги🔊", callback_data="book_audio")
+            ],
+            [
+                InlineKeyboardButton('❌', callback_data='book_delete_message')
+            ]
         ]
-    ]
-    reply_markup = InlineKeyboardMarkup(boook)
-    bot.send_message(chat.id, "*Какой пункт выберешь?*", reply_markup=reply_markup, parse_mode="Markdown")
+        reply_markup = InlineKeyboardMarkup(boook)
+        bot.send_message(chat.id, "*Какой пункт выберешь?*", reply_markup=reply_markup, parse_mode="Markdown")
 
 def books(bot: Bot, update: Update):
     query = update.callback_query

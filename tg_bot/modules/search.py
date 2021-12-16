@@ -5,125 +5,133 @@ from bs4 import BeautifulSoup
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram import Update, Bot
 from telegram.ext import CommandHandler, CallbackQueryHandler
-
+from tg_bot.modules.sql.top_users_sql import protected
 from tg_bot import dispatcher
 
 def search(bot: Bot, update: Update):
-    update.effective_message.delete()
-    user_agent = {
-    'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.143 Safari/537.36'
-    }
-
-    search = update.message.text[8:] #Запрашиваем у юзера, что он хочет найти
-    url = requests.get('https://www.google.com/search?q=' + search, headers=user_agent) #Делаем запрос
-    soup = BeautifulSoup(url.text, features="lxml") #Получаем запрос
-    r = soup.find_all("div", class_="yuRUbf") #Выводи весь тег div class="r"
-    results_news = []
-    for s in r:
-        link = s.find('a').get('href') #Ищем ссылки по тегу <a href="example.com"
-        title = s.find("h3", {'class': 'LC20lb DKV0Md'}) #Ищем описание ссылки по тегу <h3 class="LC20lb DKV0Md" 
-        title = title.get_text() #Вытаскиваем описание
-        results = f"[{title}]({link})"
-        results_news.append(results)
-        result = "\n".join(results_news)
     chat = update.effective_chat
-    delete = [
-            [
-                InlineKeyboardButton('❌', callback_data='search_delete')
+    msg = update.effective_message
+    user_id = msg.from_user.id
+    if protected(user_id):
+        update.effective_message.delete()
+        user_agent = {
+        'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.143 Safari/537.36'
+        }
+
+        search = update.message.text[8:] #Запрашиваем у юзера, что он хочет найти
+        url = requests.get('https://www.google.com/search?q=' + search, headers=user_agent) #Делаем запрос
+        soup = BeautifulSoup(url.text, features="lxml") #Получаем запрос
+        r = soup.find_all("div", class_="yuRUbf") #Выводи весь тег div class="r"
+        results_news = []
+        for s in r:
+            link = s.find('a').get('href') #Ищем ссылки по тегу <a href="example.com"
+            title = s.find("h3") #Ищем описание ссылки по тегу <h3 class="LC20lb DKV0Md"
+            title = title.get_text() #Вытаскиваем описание
+            results = f'<a href="{link}">{title}</a>''
+            results_news.append(results)
+            result = "\n".join(results_news)
+        delete = [
+                [
+                    InlineKeyboardButton('❌', callback_data='search_delete')
+                ]
             ]
-        ]
-    reply_markup = InlineKeyboardMarkup(delete)
-    bot.send_message(chat.id, 
-                    f'Результаты по запросу: "{search}"\n\n{result}', 
-                    parse_mode = "Markdown", 
-                    disable_web_page_preview=True, 
-                    reply_markup=reply_markup)
+        reply_markup = InlineKeyboardMarkup(delete)
+        bot.send_message(chat.id,
+                        f'Результаты по запросу: "{search}"\n\n{result}',
+                        parse_mode = "HTML",
+                        disable_web_page_preview=True,
+                        reply_markup=reply_markup)
 
 def wikipedia(bot: Bot, update: Update):
-    try:
-        wiki_wiki = wikipediaapi.Wikipedia(
-            language='ru',
-            extract_format=wikipediaapi.ExtractFormat.WIKI)
-        page_py = wiki_wiki.page(update.message.text[6:])
-        top_two = [
-            [
-                InlineKeyboardButton("Читать на Википедии", url=page_py.canonicalurl),
-                InlineKeyboardButton('❌', callback_data='search_delete')
+    chat = update.effective_chat
+    msg = update.effective_message
+    user_id = msg.from_user.id
+    if protected(user_id):
+        try:
+            wiki_wiki = wikipediaapi.Wikipedia(
+                language='ru',
+                extract_format=wikipediaapi.ExtractFormat.WIKI)
+            page_py = wiki_wiki.page(update.message.text[6:])
+            top_two = [
+                [
+                    InlineKeyboardButton("Читать на Википедии", url=page_py.canonicalurl),
+                    InlineKeyboardButton('❌', callback_data='search_delete')
+                ]
             ]
-        ]
-        reply_markup = InlineKeyboardMarkup(top_two)
-        chat = update.effective_chat
-        bot.send_message(chat.id, 
-                        page_py.summary, 
-                        parse_mode = "Markdown", 
-                        disable_web_page_preview=True, 
-                        reply_markup=reply_markup)
-        update.effective_message.delete()
-    except:
-        top_two = [
-            [
-                InlineKeyboardButton('❌', callback_data='search_delete')
+            reply_markup = InlineKeyboardMarkup(top_two)
+            bot.send_message(chat.id,
+                            page_py.summary,
+                            parse_mode = "Markdown",
+                            disable_web_page_preview=True,
+                            reply_markup=reply_markup)
+            update.effective_message.delete()
+        except:
+            top_two = [
+                [
+                    InlineKeyboardButton('❌', callback_data='search_delete')
+                ]
             ]
-        ]
-        reply_markup = InlineKeyboardMarkup(top_two)
-        chat = update.effective_chat
-        bot.send_message(chat.id, 
-                        "По вашему запросу ничего не найдено", 
-                        parse_mode = "Markdown", 
-                        reply_markup=reply_markup)
-        update.effective_message.delete()
-        
+            reply_markup = InlineKeyboardMarkup(top_two)
+            bot.send_message(chat.id,
+                            "По вашему запросу ничего не найдено",
+                            parse_mode = "Markdown",
+                            reply_markup=reply_markup)
+            update.effective_message.delete()
+
 
 def whois(bot: Bot, update: Update):
-    update.effective_message.delete()
-    try:
-        HEADERS = {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6)"
-           "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.87 Saf"
-           "ari/537.36"}
-
-        ip = str(update.message.text[6:])
-        get = requests.get(f"https://ipinfo.io/{ip}/json", headers = HEADERS)
-        get = get.json()
-    
-        list_first = []
-        list_double = []
-
-        for line in get:
-            list_first.append(line)
-
-        for line in get:
-            list_double.append(get[line])
-        full = []
-        list_double = list(map(str, list_double))
-
+    chat = update.effective_chat
+    msg = update.effective_message
+    user_id = msg.from_user.id
+    if protected(user_id):
+        update.effective_message.delete()
         try:
-            if "bogon" in list_first:
-                full = ip + "\nЭто локальный ip"
-            else:
-                for line in list(zip(list_first, list_double)):
-                    full.append(" ".join(line))
-                
-                if "status" in get: raise AttributeError
+            HEADERS = {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6)"
+            "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.87 Saf"
+            "ari/537.36"}
 
-                full = "\n".join(full)
-                id_ = full.find("readme")
-        except Exception as e:
-            full = f"*{ip}* - не корректен"
+            ip = str(update.message.text[6:])
+            get = requests.get(f"https://ipinfo.io/{ip}/json", headers = HEADERS)
+            get = get.json()
 
-        chat = update.effective_chat
-        delete = [
-            [
-                InlineKeyboardButton('❌', callback_data='search_delete')
+            list_first = []
+            list_double = []
+
+            for line in get:
+                list_first.append(line)
+
+            for line in get:
+                list_double.append(get[line])
+            full = []
+            list_double = list(map(str, list_double))
+
+            try:
+                if "bogon" in list_first:
+                    full = ip + "\nЭто локальный ip"
+                else:
+                    for line in list(zip(list_first, list_double)):
+                        full.append(" ".join(line))
+
+                    if "status" in get: raise AttributeError
+
+                    full = "\n".join(full)
+                    id_ = full.find("readme")
+            except Exception as e:
+                full = f"*{ip}* - не корректен"
+
+            delete = [
+                [
+                    InlineKeyboardButton('❌', callback_data='search_delete')
+                ]
             ]
-        ]
-        reply_markup = InlineKeyboardMarkup(delete)
-        bot.send_message(chat.id, 
-                        "*" + full + "*", 
-                        parse_mode = "Markdown", 
-                        disable_web_page_preview=True, 
-                        reply_markup=reply_markup)
-    except Exception as e:
-         print (f"❌❌❌❌❌ {e} ❌❌❌❌❌")
+            reply_markup = InlineKeyboardMarkup(delete)
+            bot.send_message(chat.id,
+                            "*" + full + "*",
+                            parse_mode = "Markdown",
+                            disable_web_page_preview=True,
+                            reply_markup=reply_markup)
+        except Exception as e:
+            print (f"❌❌❌❌❌ {e} ❌❌❌❌❌")
 
 def search_delete(bot: Bot, update: Update):
     query = update.callback_query
@@ -150,4 +158,3 @@ dispatcher.add_handler(WIKI_HANDLER)
 
 search_callback_handler = CallbackQueryHandler(search_delete, pattern=r"search_")
 dispatcher.add_handler(search_callback_handler)
-

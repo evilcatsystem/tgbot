@@ -8,6 +8,8 @@ from tg_bot import dispatcher
 from tg_bot.modules.disable import DisableAbleCommandHandler, DisableAbleRegexHandler
 from tg_bot.modules.sql import afk_sql as sql
 from tg_bot.modules.users import get_user_id
+from tg_bot.modules.sql.top_users_sql import protected
+
 
 AFK_GROUP = 7
 AFK_REPLY_GROUP = 8
@@ -15,14 +17,17 @@ AFK_REPLY_GROUP = 8
 
 @run_async
 def afk(bot: Bot, update: Update):
-    args = update.effective_message.text.split(None, 1)
-    if len(args) >= 2:
-        reason = args[1]
-    else:
-        reason = ""
+    user = update.effective_user  # type: Optional[User]
+    user_id = user.id
+    if protected(user_id):
+        args = update.effective_message.text.split(None, 1)
+        if len(args) >= 2:
+            reason = args[1]
+        else:
+            reason = ""
 
-    sql.set_afk(update.effective_user.id, reason)
-    update.effective_message.reply_text("{} ушел по делам!".format(update.effective_user.first_name))
+        sql.set_afk(update.effective_user.id, reason)
+        update.effective_message.reply_text("{} ушел по делам!".format(update.effective_user.first_name))
 
 
 @run_async

@@ -1,31 +1,35 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram import Update, Bot
 from telegram.ext import CommandHandler, CallbackQueryHandler
+from tg_bot.modules.sql.top_users_sql import protected
 
 from tg_bot import dispatcher
 
 def linux_glav(bot: Bot, update: Update):
-    update.effective_message.delete()
-    chat = update.effective_chat
-    linux_wiki = [
-        [
-            InlineKeyboardButton('Arch Linux', callback_data='linux_arch'),
-            InlineKeyboardButton('Ubuntu Linux', callback_data='linux_ubuntu')
-        ],
-        [
-            InlineKeyboardButton('Debian Linux', callback_data='linux_debian'),
-            InlineKeyboardButton('Gentoo Linux', callback_data='linux_gentoo')
-        ],
-        [
-            InlineKeyboardButton('LFS Linux', callback_data='linux_lfs'),
-            InlineKeyboardButton('Kali Linux', callback_data='linux_kali')
-        ],
-        [
-            InlineKeyboardButton('❌', callback_data='linux_delete_message')
+    user = update.effective_user 
+    user_id = user.id
+    if protected(user_id):
+        update.effective_message.delete()
+        chat = update.effective_chat
+        linux_wiki = [
+            [
+                InlineKeyboardButton('Arch Linux', callback_data='linux_arch'),
+                InlineKeyboardButton('Ubuntu Linux', callback_data='linux_ubuntu')
+            ],
+            [
+                InlineKeyboardButton('Debian Linux', callback_data='linux_debian'),
+                InlineKeyboardButton('Gentoo Linux', callback_data='linux_gentoo')
+            ],
+            [
+                InlineKeyboardButton('LFS Linux', callback_data='linux_lfs'),
+                InlineKeyboardButton('Kali Linux', callback_data='linux_kali')
+            ],
+            [
+                InlineKeyboardButton('❌', callback_data='linux_delete_message')
+            ]
         ]
-    ]
-    reply_markup = InlineKeyboardMarkup(linux_wiki, row_width=2)
-    bot.send_message(chat.id, "Привет братик пингвин, что желаешь?", reply_markup=reply_markup)
+        reply_markup = InlineKeyboardMarkup(linux_wiki, row_width=2)
+        bot.send_message(chat.id, "Привет братик пингвин, что желаешь?", reply_markup=reply_markup)
 
 def linux_wiki(bot: Bot, update: Update):
     query = update.callback_query

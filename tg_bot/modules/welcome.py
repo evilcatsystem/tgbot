@@ -11,7 +11,7 @@ from telegram.utils.helpers import mention_markdown, mention_html, escape_markdo
 import tg_bot.modules.sql.welcome_sql as sql
 import tg_bot.modules.sql.top_users_sql as sql_top
 import tg_bot.modules.sql.global_bans_sql as sql_ban
-from tg_bot import dispatcher, OWNER_ID, LOGGER
+from tg_bot import dispatcher, OWNER_ID, LOGGER, CHAT_ID
 from tg_bot.modules.helper_funcs.chat_status import user_admin, bot_can_delete
 from tg_bot.modules.helper_funcs.misc import build_keyboard, revert_buttons
 from tg_bot.modules.helper_funcs.msg_types import get_welcome_type
@@ -33,38 +33,38 @@ ENUM_FUNC_MAP = {
 }
 
 # do not async
-def send(update: Update, message, keyboard):
+def send(update, message, keyboard, backup_message):
     try:
         msg = update.effective_message.reply_text(message, parse_mode=ParseMode.MARKDOWN, reply_markup=keyboard)
     except IndexError:
-        msg = update.effective_message.reply_text(markdown_parser("\nПримечание: текущее сообщение было "
+        msg = update.effective_message.reply_text(markdown_parser(backup_message + "\nПримечание: текущее сообщение было "
                                                                   "недействительно из-за проблем. Может быть"
                                                                   "из-за имени пользователя."),
                                                   parse_mode=ParseMode.MARKDOWN)
     except KeyError:
-        msg = update.effective_message.reply_text(markdown_parser("\nПримечание: текущее сообщение: "
+        msg = update.effective_message.reply_text(markdown_parser(backup_message + "\nПримечание: текущее сообщение: "
                                                                   "недействительно из-за проблемы с некоторыми неуместными"
                                                                   "фигурными скобками. Обновите"),
                                                   parse_mode=ParseMode.MARKDOWN)
     except BadRequest as excp:
         if excp.message == "Button_url_invalid":
-            msg = update.effective_message.reply_text(markdown_parser("\nПримечание: у текущего сообщения недействительный URL "
+            msg = update.effective_message.reply_text(markdown_parser(backup_message + "\nПримечание: у текущего сообщения недействительный URL "
                                                                       "на одной из кнопок. Обновите."),
                                                       parse_mode=ParseMode.MARKDOWN)
         elif excp.message == "Unsupported url protocol":
-            msg = update.effective_message.reply_text(markdown_parser("\nПримечание: в текущем сообщении есть кнопки, которые "
+            msg = update.effective_message.reply_text(markdown_parser(backup_message + "\nПримечание: в текущем сообщении есть кнопки, которые "
                                                                       "используют протоколы URL, которые не поддерживаются"
                                                                       "Телеграммом. Пожалуйста, обновите."),
                                                       parse_mode=ParseMode.MARKDOWN)
         elif excp.message == "Wrong url host":
-            msg = update.effective_message.reply_text(markdown_parser("\nПримечание: в текущем сообщении есть неправильные URL-адреса. "
+            msg = update.effective_message.reply_text(markdown_parser(backup_message + "\nПримечание: в текущем сообщении есть неправильные URL-адреса. "
                                                                       "Пожалуйста обновите."),
                                                       parse_mode=ParseMode.MARKDOWN)
             LOGGER.warning(message)
             LOGGER.warning(keyboard)
             LOGGER.exception("Не удалось разобрать! получил неверный URL-адрес хоста")
         else:
-            msg = update.effective_message.reply_text(markdown_parser("\nПримечание. Произошла ошибка при отправке "
+            msg = update.effective_message.reply_text(markdown_parser(backup_message + "\nПримечание. Произошла ошибка при отправке "
                                                                       "персонализированного сообщения. Пожалуйста, обновите."),
                                                       parse_mode=ParseMode.MARKDOWN)
             LOGGER.exception()
@@ -91,7 +91,8 @@ def new_member(bot: Bot, update: Update):
                 if name == None:
                     name = new_mem.last_name
                 try:
-                    sql_top.get_user_top(user_id, name)
+                    if chat.id == CHAT_ID:
+                        sql_top.get_user_top(user_id, name)
                 except:
                     pass
                 if new_mem.id == OWNER_ID:
@@ -134,7 +135,7 @@ def new_member(bot: Bot, update: Update):
                         keyb = []
 
                     keyboard = InlineKeyboardMarkup(keyb)
-                    sent = send(res, keyboard,
+                    sent = send(update, res, keyboard,
                                 sql.DEFAULT_WELCOME.format(fullname=fullname, chatname=chat.title))  # type: Optional[Message]
 
         prev_welc = sql.get_clean_pref(chat.id)

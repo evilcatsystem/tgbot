@@ -62,20 +62,10 @@ def report(bot: Bot, update: Update) -> str:
         admin_list = chat.get_administrators()
 
         if chat.username and chat.type == Chat.SUPERGROUP:
-            msg = "<b>{}:</b>" \
-                  "\n<b>Репорт пользователя:</b> {} (<code>{}</code>)" \
-                  "\n<b>Репорт:</b> {} (<code>{}</code>)".format(html.escape(chat.title),
-                                                                      mention_html(
-                                                                          reported_user.id,
-                                                                          reported_user.first_name),
-                                                                      reported_user.id,
-                                                                      mention_html(user.id,
-                                                                                   user.first_name),
-                                                                      user.id)
-            link = "\n<b>Ссылка:</b> " \
-                   "<a href=\"http://telegram.me/{}/{}\">нажми/a>".format(chat.username, message.message_id)
-
-            should_forward = False
+            msg = "{} призывает администраторов в \"{}\"!".format(mention_html(user.id, user.first_name),
+                                                               html.escape(chat_name))
+            link = ""
+            should_forward = True
 
         else:
             msg = "{} призывает администраторов в \"{}\"!".format(mention_html(user.id, user.first_name),
@@ -89,7 +79,7 @@ def report(bot: Bot, update: Update) -> str:
 
             if sql.user_should_report(admin.user.id):
                 try:
-                    bot.send_message(admin.user.id, msg + link, parse_mode=ParseMode.HTML)
+                    bot.send_message(admin.user.id, msg + link, parse_mode="HTML")
 
                     if should_forward:
                         message.reply_to_message.forward(admin.user.id)
