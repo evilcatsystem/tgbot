@@ -5,8 +5,8 @@ from sqlalchemy import Column, String, Boolean, UnicodeText, Integer, BigInteger
 from tg_bot.modules.helper_funcs.msg_types import Types
 from tg_bot.modules.sql import SESSION, BASE
 
-DEFAULT_WELCOME = """Привет дорогой друг, *{fullname}*, добро пожаловать в чат *{chatname}*. 
-Для нас важен каждый человек. 
+DEFAULT_WELCOME = """Привет дорогой друг, *{fullname}*, добро пожаловать в чат *{chatname}*.
+Для нас важен каждый человек.
 Чтобы узнать как мной воспользоваться, напиши `/help`.
 В чате присутствует проверка от плохих людей. Просьба соблюдать уважение ко всем участникам чата.
 С уважением администратор чата *{chatname}*."""
@@ -16,7 +16,7 @@ DEFAULT_GOODBYE = "Надеюсь мы с тобой больше не увид�
 def test():
     print('hello')
 
-        
+
 
 class Welcome(BASE):
     __tablename__ = "welcome_pref"
@@ -43,7 +43,7 @@ class Welcome(BASE):
 
 class WelcomeButtons(BASE):
     __tablename__ = "welcome_urls"
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    id = Column(Integer, autoincrement=True)
     chat_id = Column(String(14), primary_key=True)
     name = Column(UnicodeText, nullable=False)
     url = Column(UnicodeText, nullable=False)
@@ -58,7 +58,7 @@ class WelcomeButtons(BASE):
 
 class GoodbyeButtons(BASE):
     __tablename__ = "leave_urls"
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    id = Column(Integer, autoincrement=True)
     chat_id = Column(String(14), primary_key=True)
     name = Column(UnicodeText, nullable=False)
     url = Column(UnicodeText, nullable=False)

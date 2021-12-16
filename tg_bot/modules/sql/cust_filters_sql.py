@@ -46,7 +46,7 @@ class CustomFilters(BASE):
 
 class Buttons(BASE):
     __tablename__ = "cust_filter_urls"
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    id = Column(Integer, autoincrement=True)
     chat_id = Column(String(14), primary_key=True)
     keyword = Column(UnicodeText, primary_key=True)
     name = Column(UnicodeText, nullable=False)

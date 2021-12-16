@@ -1,10 +1,10 @@
 from sqlalchemy import Column, UnicodeText, Integer, desc, cast
-
+from sqlalchemy import BigInteger
 from tg_bot.modules.sql import BASE, SESSION
 
 class top_sql(BASE):
     __tablename__ = "top_users"
-    user_id = Column(Integer, primary_key=True)
+    user_id = Column(BigInteger, primary_key=True)
     name = Column(UnicodeText)
     message = Column(Integer)
 
@@ -58,6 +58,13 @@ def get_user_top(user_id, name):
     finally:
         SESSION.close()
 
+def protected(user_id):
+    try:
+        user = SESSION.query(top_sql).get(user_id)
+        return user
+    finally:
+        SESSION.close()
+
 def delete_user_top(user_id):
     try:
         user = SESSION.query(top_sql).get(user_id)
@@ -67,5 +74,3 @@ def delete_user_top(user_id):
         SESSION.commit()
     finally:
         SESSION.close()
-
-
