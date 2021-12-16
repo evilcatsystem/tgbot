@@ -2,7 +2,7 @@ import html
 import re
 
 from feedparser import parse
-from telegram import ParseMode, constants
+from telegram import ParseMode, constants, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import CommandHandler
 
 from tg_bot import dispatcher, updater
@@ -23,27 +23,21 @@ def show_url(bot, update, args):
                 re.sub('<[^<]+?>', '', link_processed.feed.get("description", default="Unknown")))
             feed_link = link_processed.feed.get("link", default="Unknown")
 
-            feed_message = "<b>Заголовок:</b> \n{}" \
-                           "\n\n<b>Описание:</b> \n{}" \
-                           "\n\n<b>Ссылка на новость:</b> \n{}".format(html.escape(feed_title),
-                                                               feed_description,
-                                                               html.escape(feed_link))
-
             if len(link_processed.entries) >= 1:
                 entry_title = link_processed.entries[0].get("title", default="Unknown")
                 entry_description = "<i>{}</i>".format(
                     re.sub('<[^<]+?>', '', link_processed.entries[0].get("description", default="Unknown")))
                 entry_link = link_processed.entries[0].get("link", default="Unknown")
 
-                entry_message = "\n\n<b>Заголовок:</b> \n{}" \
-                                "\n\n<b>Описание:</b> \n{}" \
-                                "\n\n<b>Ссылка на новость:</b> \n{}".format(html.escape(entry_title),
-                                                                     entry_description,
-                                                                     html.escape(entry_link))
-                final_message = feed_message + entry_message
-
-                bot.send_message(chat_id=tg_chat_id, text=final_message, disable_web_page_preview=True, parse_mode=ParseMode.HTML)
+                bot.send_message(chat_id=tg_chat_id, text=f"<b>{html.escape(entry_title)}</b>\n<code>{entry_description}</code>",
+                                                    reply_markup=InlineKeyboardMarkup(
+                                                        [[InlineKeyboardButton(text="Ссылка на новость",
+                                                                               url=f"{html.escape(entry_link)}")]]), parse_mode=ParseMode.HTML)
             else:
+                bot.send_message(chat_id=tg_chat_id, text=f"<b>{html.escape(feed_title)}</b>\n<code>{feed_description}</code>",
+                                                    reply_markup=InlineKeyboardMarkup(
+                                                        [[InlineKeyboardButton(text="Ссылка на новость",
+                                                                               url=f"{html.escape(feed_link)}")]]), parse_mode=ParseMode.HTML)
                 bot.send_message(chat_id=tg_chat_id, text=feed_message, disable_web_page_preview=True, parse_mode=ParseMode.HTML)
         else:
             update.effective_message.reply_text("Эта ссылка не является ссылкой на RSS-канал")
@@ -144,13 +138,14 @@ def rss_update(bot, job):
 
         new_entry_links = []
         new_entry_titles = []
-
+        entry_description = []
         # this loop checks for every entry from the RSS Feed link from the DB row
         for entry in feed_processed.entries:
             # check if there are any new updates to the RSS Feed from the old entry
             if entry.link != tg_old_entry_link:
                 new_entry_links.append(entry.link)
                 new_entry_titles.append(entry.title)
+                entry_description.append(entry.description)
             else:
                 break
 
@@ -162,20 +157,29 @@ def rss_update(bot, job):
 
         if len(new_entry_links) < 5:
             # this loop sends every new update to each user from each group based on the DB entries
-            for link, title in zip(reversed(new_entry_links), reversed(new_entry_titles)):
-                final_message = "<b>{}</b>\n\n{}".format(html.escape(title), html.escape(link))
+            for link, description ,title in zip(reversed(new_entry_links), reversed(entry_description), reversed(new_entry_titles)):
+                final_message = "<b>{}</b>\n{}".format(html.escape(title), html.escape(description))
 
                 if len(final_message) <= constants.MAX_MESSAGE_LENGTH:
-                    bot.send_message(chat_id=tg_chat_id, text=final_message, disable_web_page_preview=True, parse_mode=ParseMode.HTML)
+                    bot.send_message(chat_id=tg_chat_id, text=f"<b>{html.escape(title)}</b>\n<code>{html.escape(description)}</code>",
+                                                        reply_markup=InlineKeyboardMarkup(
+                                                            [[InlineKeyboardButton(text="Ссылка на новость",
+                                                                                   url=f"{html.escape(link)}")]]), parse_mode=ParseMode.HTML)
+                    # bot.send_message(chat_id=tg_chat_id, text=final_message, disable_web_page_preview=True, parse_mode=ParseMode.HTML)
                 else:
                     bot.send_message(chat_id=tg_chat_id, text="<b>Внимание:</b> сообщение слишком большое для отправки",
                                      parse_mode=ParseMode.HTML)
         else:
-            for link, title in zip(reversed(new_entry_links[-5:]), reversed(new_entry_titles[-5:])):
-                final_message = "<b>{}</b>\n\n{}".format(html.escape(title), html.escape(link))
+            for link, description, title in zip(reversed(new_entry_links[-5:]), reversed(entry_description), reversed(new_entry_titles[-5:])):
+                final_message = "<b>{}</b>\n{}".format(html.escape(title), html.escape(description))
 
                 if len(final_message) <= constants.MAX_MESSAGE_LENGTH:
-                    bot.send_message(chat_id=tg_chat_id, text=final_message, disable_web_page_preview=True, parse_mode=ParseMode.HTML)
+                    bot.send_message(chat_id=tg_chat_id, text=f"<b>{html.escape(title)}</b>\n<code>{html.escape(description)}</code>",
+                                                        reply_markup=InlineKeyboardMarkup(
+                                                            [[InlineKeyboardButton(text="Ссылка на новость",
+                                                                                   url=f"{html.escape(link)}")]]), parse_mode=ParseMode.HTML)
+
+                    # bot.send_message(chat_id=tg_chat_id, text=final_message, disable_web_page_preview=True, parse_mode=ParseMode.HTML)
                 else:
                     bot.send_message(chat_id=tg_chat_id, text="<b>Внимание:</b> сообщение слишком большое для отправки",
                                      parse_mode=ParseMode.HTML)
