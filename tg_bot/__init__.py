@@ -102,7 +102,7 @@ else:
     CHAT_ID = Config.CHAT_ID
 
 
-SUDO_USERS.add()
+SUDO_USERS.add(OWNER_ID)
 
 updater = tg.Updater(TOKEN, workers=WORKERS)
 
@@ -112,10 +112,10 @@ SUDO_USERS = list(SUDO_USERS)
 WHITELIST_USERS = list(WHITELIST_USERS)
 SUPPORT_USERS = list(SUPPORT_USERS)
 
-# Загружать в конце, чтобы убедиться, что все предыдущие переменные были установлены
+# Load at end to ensure all prev variables have been set
 from tg_bot.modules.helper_funcs.handlers import CustomCommandHandler, CustomRegexHandler
 
-# убедитесь, что обработчик регулярных выражений может принимать дополнительные аргументы
+# make sure the regex handler can take extra kwargs
 tg.RegexHandler = CustomRegexHandler
 
 if ALLOW_EXCL:

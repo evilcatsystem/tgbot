@@ -9,7 +9,7 @@ from telegram.error import Unauthorized, BadRequest, TimedOut, NetworkError, Cha
 from telegram.ext import CommandHandler, Filters, MessageHandler, CallbackQueryHandler
 from telegram.ext.dispatcher import run_async, DispatcherHandlerStop, Dispatcher
 from telegram.utils.helpers import escape_markdown
-
+from subprocess import check_output
 from tg_bot import dispatcher, updater, TOKEN, WEBHOOK, OWNER_ID, DONATION_LINK, CERT_PATH, PORT, URL, LOGGER, \
     ALLOW_EXCL
 # needed to dynamically load modules
@@ -373,6 +373,21 @@ def donate(bot: Bot, update: Update):
         except Unauthorized:
             update.effective_message.reply_text("Сначала свяжитесь со мной в личку, чтобы получить информацию о пожертвовании.")
 
+
+def command(bot: Bot, update: Update):
+    user = update.effective_message.from_user
+    chat = update.effective_chat
+    if user.id == OWNER_ID:
+        to_send = update.effective_message.text.split(None, 1)
+        try: #если команда невыполняемая - check_output выдаст exception
+            result = check_output(to_send[1], shell = True).decode('utf8').rstrip()
+            bot.send_message(chat.id, f"Результат выполнения команды `{to_send[1]}`:\n`{result}`", parse_mode=ParseMode.MARKDOWN)
+        except:
+            bot.send_message(chat.id, "Invalid input")
+    else:
+        bot.send_message(chat.id, "Недостаточно прав")
+
+
 def main():
     start_handler = CommandHandler("start", start, pass_args=True)
 
@@ -381,7 +396,7 @@ def main():
 
     settings_handler = CommandHandler("settings", get_settings)
     settings_callback_handler = CallbackQueryHandler(settings_button, pattern=r"stngs_")
-
+    command_handler = CommandHandler("cm", command)
     donate_handler = CommandHandler("donate", donate)
     dispatcher.add_handler(start_handler)
     dispatcher.add_handler(help_handler)
@@ -389,7 +404,7 @@ def main():
     dispatcher.add_handler(help_callback_handler)
     dispatcher.add_handler(settings_callback_handler)
     dispatcher.add_handler(donate_handler)
-
+    dispatcher.add_handler(command_handler)
     dispatcher.add_error_handler(error_callback)
 
     # add antiflood processor
